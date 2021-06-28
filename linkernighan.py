@@ -18,11 +18,8 @@ def read_tsplib(path):
 
 
 def find_p_nearest_neighbours(instance, p):
-    counter=[1]
-    def find_p_nearest_neighbours_to_city(instance1, city, p1, counter):
+    def find_p_nearest_neighbours_to_city(instance1, city, p1):
         output = list()
-        print(f"City {counter} of {len(instance1)}\n{counter[0]/len(instance)*100} %")
-        counter[0]+=1
         for city_to_compare in sorted(list(instance1), key=lambda x: x.name):
             if city_to_compare == city: continue
 
@@ -36,7 +33,7 @@ def find_p_nearest_neighbours(instance, p):
                 for i in range(len(output), 0, -1):
                     if dist>=output[i-1][0]: output.insert(i, (dist, city_to_compare)); break
         return {o[1] for o in output}
-    return {city: find_p_nearest_neighbours_to_city(instance, city, p, counter) for city in instance}
+    return {city: find_p_nearest_neighbours_to_city(instance, city, p) for city in instance}
 
 
 def partial_cost(X, Y, square_distance_flag=False):
@@ -156,28 +153,6 @@ def plot_differences(X, Y):
     plt.show()
 
 
-if __name__=='__main__':
-    # instance = generate_random_instance(1686, 100, 100, 2153)
-    instance=read_tsplib("qa194.tsp")
-    # tour = random_tour(instance, True, 2154)
-    tour=nearest_neighbor_algorithm(instance)
-    tour.plot()
-    tour=lin_kernighan(instance, tour, p=15)
-    best_cost=tour.length()
-    best_tour=tour.copy()
-    print(f"Cost: {best_cost}")
-    tour.plot()
-    for i in instance:
-        tour=nearest_neighbor_algorithm(instance, i)
-        tour=random_tour(instance, False)
-        tour=lin_kernighan(instance, tour)
-        cost=tour.length()
-        if cost<best_cost: best_cost=cost; best_tour=tour.copy()
-        print(f"Cost: {tour.length()}")
-    print(f"Best cost found: {best_cost}")
-    best_tour.plot()
-
-
 def cls():
    # for mac and linux(here, os.name is 'posix')
    if name == 'posix':
@@ -187,20 +162,20 @@ def cls():
       _ = system('cls')
 
 
-def lk_based_metaheuristic(instance, constructive, cycles=1, loop_initial_city=False, p=5, max_iter=10000, verbose=False, animation=False, s_time=0.5):
+def lk_based_metaheuristic(instance, constructive, cycles=1, loop_initial_city=False, p=5, max_iter=10000, verbose=False, animation=False, s_time=0.5, seed=None):
     best_tour=None
     best_cost=None
     if loop_initial_city:
         for i, city in enumerate(instance):
             tour=constructive(instance, city)
-            tour=lin_kernighan(instance, tour, p, max_iter, verbose, animation, s_time, screen=f"Initial tour number: {i+1}\n\n")
+            tour=lin_kernighan(instance, tour, p, max_iter, verbose, animation, s_time, screen=f"Initial tour number: {i+1} / {len(instance)}\n\n")
             cost=tour.length()
             if best_cost==None: best_cost=cost; best_tour=tour.copy()
             elif cost<best_cost: best_cost=cost; best_tour=tour.copy()
     else:
         for i in range(cycles):
-            tour=constructive(instance)
-            tour=lin_kernighan(instance, tour, p, max_iter, verbose, animation, s_time, screen=f"Initial tour number: {i+1}\n\n")
+            tour=constructive(instance, seed=seed if seed==None else seed+100*i)
+            tour=lin_kernighan(instance, tour, p, max_iter, verbose, animation, s_time, screen=f"Initial tour number: {i+1} / {cycles}\n\n")
             cost=tour.length()
             if best_cost==None: best_cost=cost; best_tour=tour.copy()
             elif cost<best_cost: best_cost=cost; best_tour=tour.copy()

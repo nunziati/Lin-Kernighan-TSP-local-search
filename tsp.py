@@ -130,7 +130,7 @@ def random_tour(instance, verbose=False, seed=None):
         random.seed()
   
     # BUG: list(instance) produces a different list every time
-    list_instance = list(instance)
+    list_instance = sorted(list(instance), key=lambda x: x.name)
     if verbose:
         print(f"Before the shuffle {list_instance}")
     random.shuffle(list_instance)
